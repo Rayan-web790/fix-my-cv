@@ -7,10 +7,15 @@ const OpenAI = require('openai');
 const admin = require('firebase-admin');
 const { getPayPalAccessToken, createProduct, createPlan, verifySubscription } = require('./paypal');
 
-const openai = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY || 'placeholder',
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const groq = process.env.GROQ_API_KEY ? new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
   baseURL: "https://api.groq.com/openai/v1"
-});
+}) : null;
+
+if (!openai && !groq) {
+  console.warn("⚠️ No AI API keys found. Generation will fail.");
+}
 
 
 try {
@@ -388,24 +393,50 @@ You MUST return your output in valid JSON format matching this EXACT schema:
   const maxAttempts = 3;
   while (attempt < maxAttempts) {
     try {
-      const completion = await openai.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: prompt },
-          { role: "user", content: `${userContext}\nOriginal Text:\n${text}` }
-        ],
-        temperature: 0.7,
-      });
-      return JSON.parse(completion.choices[0].message.content.trim());
-    } catch (e) {
-      console.error(`Attempt ${attempt + 1} failed:`, e.message);
-      attempt++;
-      if (attempt >= maxAttempts) {
-        throw new Error(e.message || "AI is currently busy, please try again");
+      // Try Groq first for speed/cost if available
+      if (groq) {
+        console.log(`[AI] Attempting generation with Groq (Attempt ${attempt + 1})...`);
+        const completion = await groq.chat.completions.create({
+          model: "llama-3.3-70b-versatile",
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: prompt },
+            { role: "user", content: `${userContext}\nOriginal Text:\n${text}` }
+          ],
+          temperature: 0.7,
+        });
+        console.log("[AI] Groq generation successful.");
+        return JSON.parse(completion.choices[0].message.content.trim());
       }
-      await new Promise(res => setTimeout(res, 1000 * attempt)); // Exponential backoff wait
+    } catch (e) {
+      console.error(`[AI] Groq attempt ${attempt + 1} failed:`, e.message);
     }
+
+    try {
+      // Fallback to OpenAI if Groq fails or is not configured
+      if (openai) {
+        console.log(`[AI] Attempting fallback with OpenAI GPT-4o-mini (Attempt ${attempt + 1})...`);
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: prompt },
+            { role: "user", content: `${userContext}\nOriginal Text:\n${text}` }
+          ],
+          temperature: 0.7,
+        });
+        console.log("[AI] OpenAI generation successful.");
+        return JSON.parse(completion.choices[0].message.content.trim());
+      }
+    } catch (e) {
+      console.error(`[AI] OpenAI attempt ${attempt + 1} failed:`, e.message);
+    }
+
+    attempt++;
+    if (attempt >= maxAttempts) {
+      throw new Error("All AI providers failed. Please check your API keys and quotas.");
+    }
+    await new Promise(res => setTimeout(res, 1000 * attempt));
   }
 };
 
