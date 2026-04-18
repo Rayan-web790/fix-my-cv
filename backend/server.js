@@ -441,6 +441,7 @@ You MUST return your output in valid JSON format matching this EXACT schema:
 };
 
 app.post('/api/improve', verifyUser, async (req, res) => {
+  console.log(`[API] /api/improve request received from user: ${req.user.uid}`);
   const uid = req.user.uid;
   const { text, tone, modifier, jobDescription } = req.body;
   const currentText = text.trim();
@@ -482,9 +483,7 @@ app.post('/api/improve', verifyUser, async (req, res) => {
   let missingSkills = [];
   let matchedKeywords = [];
   try {
-     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.includes('placeholder')) {
-         throw new Error("No OpenAI key provided");
-     }
+     console.log(`[AI] Starting generation for user ${uid}...`);
      const result = await generateWithOpenAI(text, tone, modifier, jobDescription);
      improvedText = result.improvedText;
      feedbackData = result.feedback;
