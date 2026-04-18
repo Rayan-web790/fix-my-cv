@@ -608,14 +608,39 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       { role: "user", content: message }
     ];
 
-    const completion = await openai.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: messages,
-      temperature: 0.7,
-      max_tokens: 500
-    });
-
-    const aiMessage = completion.choices[0].message.content;
+    let aiMessage;
+    try {
+      if (groq) {
+        console.log(`[CHAT] Attempting Groq generation...`);
+        const completion = await groq.chat.completions.create({
+          model: "llama-3.3-70b-versatile",
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 500
+        });
+        aiMessage = completion.choices[0].message.content;
+        console.log("[CHAT] Groq response successful.");
+      } else {
+        throw new Error("Groq not configured");
+      }
+    } catch (err) {
+      console.error("[CHAT] Groq failed, trying OpenAI fallback:", err.message);
+      if (openai) {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: messages.map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          temperature: 0.7,
+          max_tokens: 500
+        });
+        aiMessage = completion.choices[0].message.content;
+        console.log("[CHAT] OpenAI fallback successful.");
+      } else {
+        throw new Error("No AI providers available for chat");
+      }
+    }
 
     // Save to Firestore
     const chatRef = db.collection('users').doc(uid).collection('chats');
