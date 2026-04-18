@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Clock, Copy, Check, Lock, Sparkles, ArrowRight, FileText, ChevronRight } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5002/api';
+const API_BASE = '/api';
 
 export default function HistoryPage() {
   const [generations, setGenerations] = useState([]);

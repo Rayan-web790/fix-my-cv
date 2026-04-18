@@ -6,7 +6,7 @@ import { trackEvent } from '../utils/analytics';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 
-const API_BASE = 'http://localhost:5002/api';
+const API_BASE = '/api';
 
 const PricingCard = ({ tier, price, features, highlighted, cta, icon: Icon, delay, onCheckout, isLoading, children }) => (
   <motion.div 

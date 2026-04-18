@@ -5,7 +5,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AppContext } from '../App';
 
-const API_BASE = 'http://localhost:5002/api';
+const API_BASE = '/api';
 
 export default function SuccessPage() {
   const [searchParams] = useSearchParams();

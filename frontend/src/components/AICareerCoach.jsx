@@ -4,7 +4,7 @@ import { MessageSquare, X, Send, User, Sparkles, Loader2, Minimize2 } from 'luci
 import axios from 'axios';
 import { AppContext } from '../App';
 
-const API_BASE = 'http://localhost:5002/api';
+const API_BASE = '/api';
 
 export default function AICareerCoach() {
   const { isPremium, currentCVContext } = useContext(AppContext);

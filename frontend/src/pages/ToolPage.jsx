@@ -10,7 +10,7 @@ import { AppContext } from '../App';
 import { useAuth } from '../contexts/AuthContext';
 import { trackEvent } from '../utils/analytics';
 
-const API_BASE = 'http://localhost:5002/api';
+const API_BASE = '/api';
 
 const UpgradeModal = ({ isOpen, onClose, reason }) => (
   <AnimatePresence>
