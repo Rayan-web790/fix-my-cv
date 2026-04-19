@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "https://tylangvlad-fix-my-cv.hf.space/$1"
+    }
+  ]
+}
