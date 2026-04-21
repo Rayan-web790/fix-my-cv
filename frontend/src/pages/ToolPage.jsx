@@ -220,7 +220,7 @@ export default function ToolPage() {
         setModalReason('limit');
         setShowUpgradeModal(true);
       } else {
-        setError(err.response?.data?.message || "Generation failed. Please check your connection.");
+        setError(err.response?.data?.error || "Generation failed. Please check your connection.");
       }
     } finally {
       setIsLoading(false);
