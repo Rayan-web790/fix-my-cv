@@ -47,19 +47,35 @@ function MainRing() {
   )
 }
 
-export default function Scene3D() {
+export default function Scene3D({ wide = false }) {
   return (
     <div className="absolute inset-0 z-0 pointer-events-none opacity-80">
-      <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+      <Canvas camera={{ position: [0, 0, 8], fov: wide ? 60 : 45 }}>
         <ambientLight intensity={1} />
         <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
         <Environment preset="city" />
         
         <MainRing />
-        <GlassShape position={[-3, 1, 0]} scale={1.5} rotationSpeed={{ x: 0.1, y: 0.2 }} />
-        <GlassShape position={[3, -1, -1]} scale={1} rotationSpeed={{ x: 0.3, y: 0.1 }} />
-        <GlassShape position={[0, -3, 1]} scale={0.8} rotationSpeed={{ x: -0.2, y: 0.4 }} />
-        <GlassShape position={[4, 3, -3]} scale={2} rotationSpeed={{ x: 0.05, y: -0.1 }} />
+        
+        {wide ? (
+          <>
+            {/* Shapes pushed far to the sides to frame the tool UI */}
+            <GlassShape position={[-6, 1, -1]} scale={1.8} rotationSpeed={{ x: 0.1, y: 0.2 }} />
+            <GlassShape position={[6, -1, -2]} scale={1.5} rotationSpeed={{ x: 0.3, y: 0.1 }} />
+            <GlassShape position={[-5, -3, 0]} scale={2} rotationSpeed={{ x: -0.2, y: 0.4 }} />
+            <GlassShape position={[7, 3, -4]} scale={2.5} rotationSpeed={{ x: 0.05, y: -0.1 }} />
+            
+            <GlassShape position={[-8, 4, -5]} scale={3} rotationSpeed={{ x: -0.1, y: -0.2 }} />
+            <GlassShape position={[8, -4, -6]} scale={2.2} rotationSpeed={{ x: 0.2, y: 0.3 }} />
+          </>
+        ) : (
+          <>
+            <GlassShape position={[-3, 1, 0]} scale={1.5} rotationSpeed={{ x: 0.1, y: 0.2 }} />
+            <GlassShape position={[3, -1, -1]} scale={1} rotationSpeed={{ x: 0.3, y: 0.1 }} />
+            <GlassShape position={[0, -3, 1]} scale={0.8} rotationSpeed={{ x: -0.2, y: 0.4 }} />
+            <GlassShape position={[4, 3, -3]} scale={2} rotationSpeed={{ x: 0.05, y: -0.1 }} />
+          </>
+        )}
 
         {/* Ambient floating dust */}
         <Sparkles count={200} scale={12} size={2} speed={0.4} opacity={0.3} color="#8b5cf6" />
