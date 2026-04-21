@@ -321,7 +321,7 @@ export default function ToolPage() {
   return (
     <div className="relative w-full min-h-[85vh]">
       {/* Immersive 3D Background Spanning Full Width */}
-      <div className="absolute inset-0 -z-10 w-full h-full opacity-80 pointer-events-none">
+      <div className="fixed inset-0 z-0 w-full h-full opacity-80 pointer-events-none">
         <Suspense fallback={null}>
           <Scene3D wide={true} />
         </Suspense>
