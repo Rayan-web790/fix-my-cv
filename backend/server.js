@@ -406,7 +406,7 @@ You MUST return your output in valid JSON format matching this EXACT schema:
       if (groq) {
         console.log(`[AI] Attempting generation with Groq (Attempt ${attempt + 1})...`);
         const completion = await groq.chat.completions.create({
-          model: "llama-3.1-70b-versatile",
+          model: "mixtral-8x7b-32768",
           response_format: { type: "json_object" },
           messages: sanitizeMessages([
             { role: "system", content: prompt },
@@ -418,6 +418,7 @@ You MUST return your output in valid JSON format matching this EXACT schema:
         return JSON.parse(completion.choices[0].message.content.trim());
       }
     } catch (e) {
+      await logError('GROQ_GENERATION_ERROR', e);
       console.error(`[AI] Groq attempt ${attempt + 1} failed:`, e.message);
     }
 
@@ -438,6 +439,7 @@ You MUST return your output in valid JSON format matching this EXACT schema:
         return JSON.parse(completion.choices[0].message.content.trim());
       }
     } catch (e) {
+      await logError('OPENAI_FALLBACK_ERROR', e);
       console.error(`[AI] OpenAI attempt ${attempt + 1} failed:`, e.message);
     }
 
@@ -622,7 +624,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       if (groq) {
         console.log(`[CHAT] Attempting Groq generation...`);
         const completion = await groq.chat.completions.create({
-          model: "llama-3.1-70b-versatile",
+          model: "mixtral-8x7b-32768",
           messages: sanitizeMessages(messages),
           temperature: 0.7,
           max_tokens: 500
