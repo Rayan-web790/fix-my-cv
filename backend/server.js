@@ -406,7 +406,7 @@ You MUST return your output in valid JSON format matching this EXACT schema:
       if (groq) {
         console.log(`[AI] Attempting generation with Groq (Attempt ${attempt + 1})...`);
         const completion = await groq.chat.completions.create({
-          model: "mixtral-8x7b-32768",
+          model: "llama-3.1-8b-instant",
           response_format: { type: "json_object" },
           messages: sanitizeMessages([
             { role: "system", content: prompt },
@@ -624,7 +624,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       if (groq) {
         console.log(`[CHAT] Attempting Groq generation...`);
         const completion = await groq.chat.completions.create({
-          model: "mixtral-8x7b-32768",
+          model: "llama-3.1-8b-instant",
           messages: sanitizeMessages(messages),
           temperature: 0.7,
           max_tokens: 500
