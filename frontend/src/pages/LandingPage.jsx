@@ -118,6 +118,33 @@ const Feature = ({ icon: Icon, title, desc, index }) => (
   </motion.div>
 );
 
+const testimonials = [
+  {
+    name: "Sarah Jenkins",
+    role: "Senior Engineer at Google",
+    quote: "I was skeptical of AI writing, but FixMyCV actually captured the nuance of my backend work. It saved me hours of frustration and helped me land L5.",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80"
+  },
+  {
+    name: "Marcus Chen",
+    role: "Product Manager at Stripe",
+    quote: "The ATS optimization feature is a game-changer. I went from getting zero callbacks to having three interviews lined up in the same week.",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80"
+  },
+  {
+    name: "Elena Rodriguez",
+    role: "UX Researcher at Spotify",
+    quote: "FixMyCV took my vague bullet points and turned them into powerful impact statements. The results speak for themselves.",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80"
+  },
+  {
+    name: "David Kim",
+    role: "Data Scientist at Meta",
+    quote: "I'm good at numbers, not writing. This tool beautifully summarized my complex data projects into digestible value propositions for recruiters.",
+    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=150&q=80"
+  }
+];
+
 export default function LandingPage() {
   return (
     <div className="pb-32">
@@ -171,17 +198,17 @@ export default function LandingPage() {
                 Professionals using FixMyCV have seen a 65% increase in recruiter reach-outs within the first month.
               </p>
               <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-12 h-12 rounded-full border-4 border-white dark:border-slate-950 bg-slate-200 dark:bg-slate-800" />
+                {testimonials.slice(0, 4).map((t, i) => (
+                  <img key={i} src={t.image} alt={t.name} className="w-12 h-12 rounded-full border-4 object-cover border-white dark:border-slate-950 bg-slate-200 dark:bg-slate-800" />
                 ))}
-                <div className="w-12 h-12 rounded-full border-4 border-white dark:border-slate-950 bg-primary-600 flex items-center justify-center text-white text-xs font-bold">
+                <div className="w-12 h-12 rounded-full border-4 border-white dark:border-slate-950 bg-primary-600 flex items-center justify-center text-white text-xs font-bold z-10">
                   +2k
                 </div>
               </div>
             </div>
             
             <div className="lg:col-span-2 grid md:grid-cols-2 gap-8">
-              {[1, 2].map((i) => (
+              {testimonials.map((t, i) => (
                 <motion.div 
                   key={i} 
                   whileHover={{ y: -8 }}
@@ -189,14 +216,14 @@ export default function LandingPage() {
                 >
                   <Quote size={40} className="absolute top-6 right-6 text-primary-500/10" />
                   <div className="flex items-center space-x-4 mb-8">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800" />
+                    <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover shadow-sm bg-slate-100 dark:bg-slate-800" />
                     <div>
-                      <h4 className="font-bold dark:text-white tracking-tight">Alex Thompson</h4>
-                      <p className="text-slate-500 text-xs font-medium uppercase tracking-wider">Product Designer at Airbnb</p>
+                      <h4 className="font-bold dark:text-white tracking-tight">{t.name}</h4>
+                      <p className="text-primary-600 dark:text-primary-400 text-xs font-bold uppercase tracking-wider">{t.role}</p>
                     </div>
                   </div>
                   <p className="text-slate-600 dark:text-slate-400 italic font-medium leading-[1.8]">
-                    "I was skeptical of AI writing, but FixMyCV actually captured the nuance of my work. It saved me hours of frustration and I got my first choice role."
+                    "{t.quote}"
                   </p>
                   <div className="flex text-yellow-400 mt-8 gap-1">
                     {[...Array(5)].map((_, j) => <Star key={j} size={16} fill="currentColor" />)}
