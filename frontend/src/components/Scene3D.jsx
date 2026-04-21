@@ -1,46 +1,68 @@
 import React, { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere, MeshDistortMaterial, Environment, Float, Stars } from '@react-three/drei';
+import { Icosahedron, Torus, Environment, Float, Sparkles, MeshTransmissionMaterial } from '@react-three/drei';
 
-function AICore() {
+function GlassShape({ position, scale, rotationSpeed }) {
   const meshRef = useRef();
 
-  // Rotate slowly over time
   useFrame((state, delta) => {
     if (meshRef.current) {
-      meshRef.current.rotation.x += delta * 0.2;
-      meshRef.current.rotation.y += delta * 0.3;
+      meshRef.current.rotation.x += delta * rotationSpeed.x;
+      meshRef.current.rotation.y += delta * rotationSpeed.y;
     }
   });
 
   return (
-    <Float speed={2} rotationIntensity={1} floatIntensity={2}>
-      <Sphere ref={meshRef} args={[1, 64, 64]} scale={2.5}>
-        <MeshDistortMaterial
-          color="#6d28d9" // purple-700
-          attach="material"
-          distort={0.4}
-          speed={2}
-          roughness={0.2}
-          metalness={0.8}
-          clearcoat={1}
-          clearcoatRoughness={0.1}
+    <Float speed={2} rotationIntensity={0.5} floatIntensity={1} position={position}>
+      <Icosahedron ref={meshRef} args={[1, 0]} scale={scale}>
+        <MeshTransmissionMaterial 
+          backside 
+          thickness={0.5} 
+          roughness={0.1} 
+          transmission={1} 
+          ior={1.2} 
+          chromaticAberration={0.4} 
+          color="#a855f7" 
         />
-      </Sphere>
+      </Icosahedron>
     </Float>
   );
 }
 
+function MainRing() {
+  const meshRef = useRef();
+
+  useFrame((state, delta) => {
+    if (meshRef.current) {
+       meshRef.current.rotation.z += delta * 0.1;
+       meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.2;
+       meshRef.current.rotation.y = Math.cos(state.clock.elapsedTime * 0.2) * 0.2;
+    }
+  });
+
+  return (
+    <Torus ref={meshRef} args={[4, 0.05, 16, 100]} position={[0, 0, -2]}>
+      <meshStandardMaterial color="#4f46e5" emissive="#4f46e5" emissiveIntensity={2} roughness={0.2} metalness={0.8} />
+    </Torus>
+  )
+}
+
 export default function Scene3D() {
   return (
-    <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
-      <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[10, 10, 5]} intensity={2} color="#8b5cf6" />
-        <directionalLight position={[-10, -10, -5]} intensity={1} color="#3b82f6" />
+    <div className="absolute inset-0 z-0 pointer-events-none opacity-80">
+      <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+        <ambientLight intensity={1} />
+        <directionalLight position={[10, 10, 5]} intensity={2} color="#ffffff" />
         <Environment preset="city" />
-        <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={1} />
-        <AICore />
+        
+        <MainRing />
+        <GlassShape position={[-3, 1, 0]} scale={1.5} rotationSpeed={{ x: 0.1, y: 0.2 }} />
+        <GlassShape position={[3, -1, -1]} scale={1} rotationSpeed={{ x: 0.3, y: 0.1 }} />
+        <GlassShape position={[0, -3, 1]} scale={0.8} rotationSpeed={{ x: -0.2, y: 0.4 }} />
+        <GlassShape position={[4, 3, -3]} scale={2} rotationSpeed={{ x: 0.05, y: -0.1 }} />
+
+        {/* Ambient floating dust */}
+        <Sparkles count={200} scale={12} size={2} speed={0.4} opacity={0.3} color="#8b5cf6" />
       </Canvas>
     </div>
   );
