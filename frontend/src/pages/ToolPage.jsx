@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, Suspense } from 'react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
 import { Sparkles, Copy, FileDown, RefreshCw, AlertCircle, Check, Loader2, Wand2, Info, X, Crown, ArrowRight, Target, Briefcase, Zap, CheckCircle2, MousePointer2, Share2, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { db } from '../firebase';
@@ -9,6 +9,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import { useAuth } from '../contexts/AuthContext';
 import { trackEvent } from '../utils/analytics';
+import Scene3D from '../components/Scene3D';
 
 const API_BASE = '/api';
 
@@ -318,12 +319,20 @@ export default function ToolPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16 relative">
-      <UpgradeModal 
-        isOpen={showUpgradeModal} 
-        onClose={() => setShowUpgradeModal(false)} 
-        reason={modalReason}
-      />
+    <div className="relative w-full min-h-[85vh] overflow-hidden">
+      {/* Immersive 3D Background Spanning Full Width */}
+      <div className="absolute inset-0 -z-20 w-full h-full opacity-60">
+        <Suspense fallback={null}>
+          <Scene3D />
+        </Suspense>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-16 relative z-10">
+        <UpgradeModal 
+          isOpen={showUpgradeModal} 
+          onClose={() => setShowUpgradeModal(false)} 
+          reason={modalReason}
+        />
 
       {/* Modal Analytics */}
       {useEffect(() => {
@@ -779,6 +788,7 @@ export default function ToolPage() {
              <span className="flex items-center gap-1.5"><Check size={12} className="text-green-500"/> Measurable Impact</span>
           </div>
         </motion.div>
+      </div>
       </div>
     </div>
   );
