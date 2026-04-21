@@ -47,9 +47,15 @@ export default function AICareerCoach() {
     setIsLoading(true);
 
     try {
+      // Clean history before sending to keep payload small and prevent API errors
+      const sanitizedHistory = chatHistory.map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
       const res = await axios.post(`${API_BASE}/chat`, {
         message: userMsg.content,
-        history: chatHistory,
+        history: sanitizedHistory,
         context: currentCVContext
       });
 

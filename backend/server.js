@@ -101,6 +101,15 @@ const isAdmin = (req, res, next) => {
   }
 };
 
+// Helper to clean messages for AI providers (prevents errors from extra fields like 'timestamp')
+const sanitizeMessages = (messages) => {
+  if (!Array.isArray(messages)) return [];
+  return messages.map(m => ({
+    role: (m.role === 'assistant' || m.role === 'system') ? m.role : 'user',
+    content: String(m.content || "")
+  }));
+};
+
 const app = express();
 const PORT = process.env.PORT || 7860;
 
@@ -397,12 +406,12 @@ You MUST return your output in valid JSON format matching this EXACT schema:
       if (groq) {
         console.log(`[AI] Attempting generation with Groq (Attempt ${attempt + 1})...`);
         const completion = await groq.chat.completions.create({
-          model: "llama-3.3-70b-versatile",
+          model: "llama-3.1-70b-versatile",
           response_format: { type: "json_object" },
-          messages: [
+          messages: sanitizeMessages([
             { role: "system", content: prompt },
             { role: "user", content: `${userContext}\nOriginal Text:\n${text}` }
-          ],
+          ]),
           temperature: 0.7,
         });
         console.log("[AI] Groq generation successful.");
@@ -419,10 +428,10 @@ You MUST return your output in valid JSON format matching this EXACT schema:
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
           response_format: { type: "json_object" },
-          messages: [
+          messages: sanitizeMessages([
             { role: "system", content: prompt },
             { role: "user", content: `${userContext}\nOriginal Text:\n${text}` }
-          ],
+          ]),
           temperature: 0.7,
         });
         console.log("[AI] OpenAI generation successful.");
@@ -613,8 +622,8 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       if (groq) {
         console.log(`[CHAT] Attempting Groq generation...`);
         const completion = await groq.chat.completions.create({
-          model: "llama-3.3-70b-versatile",
-          messages: messages,
+          model: "llama-3.1-70b-versatile",
+          messages: sanitizeMessages(messages),
           temperature: 0.7,
           max_tokens: 500
         });
@@ -628,10 +637,7 @@ app.post('/api/chat', verifyUser, async (req, res) => {
       if (openai) {
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
-          messages: messages.map(m => ({
-            role: m.role,
-            content: m.content
-          })),
+          messages: sanitizeMessages(messages),
           temperature: 0.7,
           max_tokens: 500
         });
