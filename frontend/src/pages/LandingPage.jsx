@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Zap, Shield, ChevronRight, CheckCircle2, TrendingUp, Sparkles, Target, Wand2, Star, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Scene3D from '../components/Scene3D';
 
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -90,10 +91,12 @@ const Hero = () => (
         </div>
       </motion.div>
     </div>
-    
-    {/* Decorative Elements */}
-    <div className="premium-blur top-0 left-1/4 w-[500px] h-[500px] bg-primary-500/10" />
-    <div className="premium-blur bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10" />
+    {/* 3D Interactive Background */}
+    <Suspense fallback={<div className="absolute inset-0 bg-slate-50 dark:bg-slate-950 -z-10" />}>
+      <Scene3D />
+    </Suspense>
+    {/* Fallback glow for structure */}
+    <div className="premium-blur top-0 right-0 w-[800px] h-[800px] bg-primary-500/5 -z-20" />
   </section>
 );
 
