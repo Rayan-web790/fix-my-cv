@@ -100,6 +100,9 @@ export default function ToolPage() {
   const [matchScore, setMatchScore] = useState(null);
   const [missingSkills, setMissingSkills] = useState([]);
   const [matchedKeywords, setMatchedKeywords] = useState([]);
+  const [safetyStatus, setSafetyStatus] = useState('SAFE');
+  const [safetyExplanation, setSafetyExplanation] = useState('');
+  const [actionableSuggestions, setActionableSuggestions] = useState([]);
   const [loadingText, setLoadingText] = useState('Optimizing...');
   const [isLoading, setIsLoading] = useState(false);
   const [usage, setUsage] = useState({ used: 0, total: 3 });
@@ -196,11 +199,13 @@ export default function ToolPage() {
       setLastAttemptInput(input);
       // Use the newly engineered AI feedback directly
       setSuccessMessage(res.data.feedback || []);
-      setMatchScore(res.data.matchScore || null);
+      setMatchScore(res.data.matchScore);
       setMissingSkills(res.data.missingSkills || []);
       setMatchedKeywords(res.data.matchedKeywords || []);
-
-      clearTimeout(secondaryLoadTimer);
+      setSafetyStatus(res.data.safetyStatus || 'SAFE');
+      setSafetyExplanation(res.data.safetyExplanation || '');
+      setActionableSuggestions(res.data.actionableSuggestions || []);
+      setSuccessMessage(res.data.feedback || []);
       setShowFeedback(true);
       setFeedbackSubmitted(false);
       setFeedbackText('');
@@ -649,6 +654,29 @@ export default function ToolPage() {
                           </div>
                         </div>
                       )}
+                      {actionableSuggestions && actionableSuggestions.length > 0 && (
+                        <div className="bg-blue-50/50 dark:bg-blue-950/20 px-4 py-3 rounded-xl border border-blue-100 dark:border-blue-900/30 mt-1">
+                          <div className="text-[9px] uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider flex items-center gap-1.5 mb-2"><Sparkles size={10}/> Actionable Career Suggestions</div>
+                          <ul className="space-y-2">
+                             {actionableSuggestions.map((suggestion, i) => (
+                               <li key={i} className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-start gap-2">
+                                 <div className="w-1 h-1 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                                 {suggestion}
+                               </li>
+                             ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {safetyStatus === 'NOT SAFE' && (
+                  <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
+                    <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={18} />
+                    <div>
+                      <div className="text-sm font-bold text-amber-800 dark:text-amber-400">Content Quality Warning</div>
+                      <div className="text-xs text-amber-700 dark:text-amber-500 mt-0.5">{safetyExplanation}</div>
                     </div>
                   </div>
                 )}

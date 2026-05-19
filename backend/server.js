@@ -6,6 +6,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_place
 const OpenAI = require('openai');
 const admin = require('firebase-admin');
 const { getPayPalAccessToken, createProduct, createPlan, verifySubscription } = require('./paypal');
+const SYSTEM_PROMPTS = require('./prompts');
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
 const groq = process.env.GROQ_API_KEY ? new OpenAI({
@@ -373,18 +374,29 @@ app.get('/api/verify-simulation', verifyUser, async (req, res) => {
 });
 
 const generateWithOpenAI = async (text, tone = 'Professional', modifier = null, jobDescription = '') => {
-  let prompt = `You are an expert resume writer. Rewrite the following CV bullet points to be professional, concise, and results-oriented. Do not use first-person pronouns. Do not invent fake metrics. Improve clarity, grammar, and impact.
+  let prompt = SYSTEM_PROMPTS.OPTIMIZE;
   
-You MUST return your output in valid JSON format matching this EXACT schema:
+  if (tone === 'Strict') {
+    prompt += `\n${SYSTEM_PROMPTS.STRICT_MODE}`;
+  } else if (tone === 'Professional') {
+    prompt += `\n${SYSTEM_PROMPTS.PROFESSIONAL_MODE}`;
+  } else {
+    prompt += `\n${SYSTEM_PROMPTS.EXPERT_MODE}`;
+  }
+
+  prompt += `\n\nYou MUST return your output in valid JSON format matching this EXACT schema:
 {
   "improvedText": "The finalized markup string containing the rewritten CV bullets, each on a new line prefixed with a dash.",
-  "feedback": ["A specific 4-7 word string analyzing the primary improvement you made", "Another specific 4-7 word string analyzing a secondary improvement you made"]`;
+  "feedback": ["A specific 4-7 word string analyzing the primary improvement you made", "Another specific 4-7 word string analyzing a secondary improvement you made"],
+  "safetyStatus": "SAFE or NOT SAFE based on truth-preservation rules",
+  "safetyExplanation": "A brief sentence explaining why it is safe or what was flagged"`;
 
   let userContext = `Voice Tone: ${tone}\n`;
   if (jobDescription) {
     userContext += `Target Job Description:\n${jobDescription}\n`;
-    prompt += `,\n  "matchScore": <Number between 0-100 indicating how well the rewritten text matches the job description>,\n  "missingSkills": ["Array of 1-3 critical skills from the JD that are STILL missing from the rewritten text"],\n  "matchedKeywords": ["Array of 1-5 required skills successfully embedded into the text"]`;
-    prompt += `\n}\nReturn EXACTLY 2 strings in the feedback array. Do not return plain text.`;
+    prompt += `,\n  "matchScore": <Number between 0-100 indicating how well the rewritten text matches the job description>,\n  "missingSkills": ["Array of 1-3 critical skills from the JD that are STILL missing from the rewritten text"],\n  "matchedKeywords": ["Array of 1-5 required skills successfully embedded into the text"],
+  "actionableSuggestions": ["1-3 specific suggestions based on missing skills as per the SUGGESTIONS prompt"]`;
+    prompt += `\n}\n${SYSTEM_PROMPTS.JD_ANALYSIS}\n${SYSTEM_PROMPTS.SUGGESTIONS}\n${SYSTEM_PROMPTS.SAFETY_CHECK}\nReturn EXACTLY 2 strings in the feedback array. Do not return plain text.`;
     prompt += ` Analyze the Target Job Description. Extract the core technical skills, soft skills, and keywords required for the role. Naturally weave these exact keywords into the rewritten resume bullets. Base your matchScore STRICTLY on keyword overlap and the presence of required skills (do not invent a random score). You MUST wrap any job-description-matched keywords you insert in markdown bold syntax (like **keyword**) to highlight them visually.`;
   } else {
     prompt += `\n}\nReturn EXACTLY 2 strings in the feedback array. Do not return plain text.`;
@@ -493,15 +505,21 @@ app.post('/api/improve', verifyUser, async (req, res) => {
   let matchScore = null;
   let missingSkills = [];
   let matchedKeywords = [];
+  let safetyStatus = 'SAFE';
+  let safetyExplanation = '';
+  let actionableSuggestions = [];
   try {
      console.log(`[AI] Starting generation for user ${uid}...`);
      const result = await generateWithOpenAI(text, tone, modifier, jobDescription);
      improvedText = result.improvedText;
      feedbackData = result.feedback;
+     safetyStatus = result.safetyStatus || 'SAFE';
+     safetyExplanation = result.safetyExplanation || '';
      if (jobDescription) {
          matchScore = result.matchScore;
          missingSkills = result.missingSkills || [];
          matchedKeywords = result.matchedKeywords || [];
+         actionableSuggestions = result.actionableSuggestions || [];
      }
   } catch (err) {
      await logError('OPENAI_GENERATION', err, { uid, tone, modifier });
@@ -533,7 +551,17 @@ app.post('/api/improve', verifyUser, async (req, res) => {
   // Silent Monitoring
   await monitorAbuse(uid, 'improve');
 
-  res.json({ improved: improvedText, feedback: feedbackData, matchScore, missingSkills, matchedKeywords, isPremium });
+  res.json({ 
+    improved: improvedText, 
+    feedback: feedbackData, 
+    matchScore, 
+    missingSkills, 
+    matchedKeywords, 
+    actionableSuggestions,
+    safetyStatus,
+    safetyExplanation,
+    isPremium 
+  });
 });
 
 app.get('/api/history', verifyUser, async (req, res) => {

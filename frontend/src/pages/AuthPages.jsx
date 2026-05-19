@@ -29,18 +29,23 @@ export default function AuthPage({ isSignUp = false }) {
 
       // Sync to Firestore for Lead Collection
       if (userCredential?.user) {
-        const userRef = doc(db, 'users', userCredential.user.uid);
-        const userData = {
-          email: userCredential.user.email,
-          lastActive: serverTimestamp(),
-        };
+        try {
+          const userRef = doc(db, 'users', userCredential.user.uid);
+          const userData = {
+            email: userCredential.user.email,
+            lastActive: serverTimestamp(),
+          };
 
-        if (isSignUp) {
-          userData.createdAt = serverTimestamp();
-          userData.isPremium = 0; // Default only for new users
+          if (isSignUp) {
+            userData.createdAt = serverTimestamp();
+            userData.isPremium = 0; // Default only for new users
+          }
+
+          await setDoc(userRef, userData, { merge: true });
+        } catch (firestoreError) {
+          console.warn("Firestore sync failed (likely rules):", firestoreError);
+          // Catch silently so default database rules do not block successful user registration/login
         }
-
-        await setDoc(userRef, userData, { merge: true });
       }
 
       navigate('/tool');

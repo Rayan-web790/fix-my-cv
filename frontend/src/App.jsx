@@ -15,6 +15,7 @@ const CancelPage = lazy(() => import('./pages/CancelPage'));
 const AuthPage = lazy(() => import('./pages/AuthPages'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const MetricsVerification = lazy(() => import('./pages/MetricsVerification'));
 import AICareerCoach from './components/AICareerCoach';
 
 export const AppContext = createContext();
@@ -56,6 +57,8 @@ const Navbar = ({ darkMode, toggleDarkMode, isPremium, currentUser, logout }) =>
     { name: 'Pricing', path: '/pricing', icon: CreditCard },
     ...(currentUser && currentUser.isAdmin ? [{ name: 'Admin', path: '/admin', icon: LayoutDashboard }] : []),
   ];
+
+  if (location.pathname.startsWith('/verification')) return null;
 
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'py-2' : 'py-6'}`}>
@@ -151,18 +154,51 @@ const Navbar = ({ darkMode, toggleDarkMode, isPremium, currentUser, logout }) =>
   );
 };
 
+const MainLayout = ({ darkMode, toggleDarkMode, isPremium, currentUser, logout }) => {
+  const location = useLocation();
+  const isVerification = location.pathname.startsWith('/verification');
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col selection:bg-primary-500/30">
+      <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} isPremium={isPremium} currentUser={currentUser} logout={logout} />
+      <main className={`flex-grow ${isVerification ? '' : 'pt-28'}`}>
+        <AnimatePresence mode="wait">
+          <Suspense fallback={<div className="h-[60vh] flex items-center justify-center"><Loader2 className="animate-spin text-primary-600" size={48} /></div>}>
+            <Routes>
+              <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+              <Route path="/login" element={<PageTransition><AuthPage isSignUp={false} /></PageTransition>} />
+              <Route path="/signup" element={<PageTransition><AuthPage isSignUp={true} /></PageTransition>} />
+              <Route path="/tool" element={<PageTransition><ToolPage /></PageTransition>} />
+              <Route path="/history" element={<PageTransition><HistoryPage /></PageTransition>} />
+              <Route path="/pricing" element={<PageTransition><PricingPage /></PageTransition>} />
+              <Route path="/success" element={<PageTransition><SuccessPage /></PageTransition>} />
+              <Route path="/cancel" element={<PageTransition><CancelPage /></PageTransition>} />
+              <Route path="/verification/revenue" element={<MetricsVerification type="stripe" />} />
+              <Route path="/verification/traffic" element={<MetricsVerification type="traffic" />} />
+              <Route path="/admin" element={
+                <AdminRoute isAdmin={false}>
+                  <PageTransition><AdminDashboard /></PageTransition>
+                </AdminRoute>
+              } />
+            </Routes>
+          </Suspense>
+        </AnimatePresence>
+      </main>
+      {!isVerification && <AICareerCoach />}
+    </div>
+  );
+};
+
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const { currentUser, logout } = useAuth(); // Global Firebase user State
+  const { currentUser, logout } = useAuth();
   
-  // Initialize Analytics
   useEffect(() => {
     initAnalytics();
   }, []);
 
-  // Identify User for Analytics
   useEffect(() => {
     if (currentUser) {
       identifyUser(currentUser.uid, currentUser.email);
@@ -200,7 +236,6 @@ export default function App() {
       const res = await axios.get(`${API_BASE}/usage`);
       setIsPremium(res.data.isPremium);
       setIsAdmin(res.data.isAdmin);
-      // Inject isAdmin into currentUser for Navbar access
       if (currentUser) currentUser.isAdmin = res.data.isAdmin;
     } catch (err) {
       console.error("Failed to check premium/admin status", err);
@@ -218,31 +253,7 @@ export default function App() {
   return (
     <AppContext.Provider value={{ isPremium, checkPremium, currentCVContext, setCurrentCVContext }}>
       <Router>
-        <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col selection:bg-primary-500/30">
-          <Navbar darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} isPremium={isPremium} currentUser={currentUser} logout={logout} />
-          <main className="flex-grow pt-28">
-            <AnimatePresence mode="wait">
-              <Suspense fallback={<div className="h-[60vh] flex items-center justify-center"><Loader2 className="animate-spin text-primary-600" size={48} /></div>}>
-                <Routes>
-                  <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
-                  <Route path="/login" element={<PageTransition><AuthPage isSignUp={false} /></PageTransition>} />
-                  <Route path="/signup" element={<PageTransition><AuthPage isSignUp={true} /></PageTransition>} />
-                  <Route path="/tool" element={<PageTransition><ToolPage /></PageTransition>} />
-                  <Route path="/history" element={<PageTransition><HistoryPage /></PageTransition>} />
-                  <Route path="/pricing" element={<PageTransition><PricingPage /></PageTransition>} />
-                  <Route path="/success" element={<PageTransition><SuccessPage /></PageTransition>} />
-                  <Route path="/cancel" element={<PageTransition><CancelPage /></PageTransition>} />
-                  <Route path="/admin" element={
-                    <AdminRoute isAdmin={isAdmin}>
-                      <PageTransition><AdminDashboard /></PageTransition>
-                    </AdminRoute>
-                  } />
-                </Routes>
-              </Suspense>
-            </AnimatePresence>
-          </main>
-          <AICareerCoach />
-        </div>
+        <MainLayout darkMode={darkMode} toggleDarkMode={() => setDarkMode(!darkMode)} isPremium={isPremium} currentUser={currentUser} logout={logout} />
       </Router>
     </AppContext.Provider>
   );
